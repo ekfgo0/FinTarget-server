@@ -21,8 +21,9 @@ public class PolicyController {
     @GetMapping
     public ResponseEntity<List<PolicyResponse>> getMatchingPolicies(
             @RequestParam int age,
-            @RequestParam Long income) {
-        return ResponseEntity.ok(policyService.getMatchingPolicies(age, income));
+            @RequestParam Long income,
+            @RequestParam(required = false) String policyType) {
+        return ResponseEntity.ok(policyService.getMatchingPolicies(age, income, policyType));
     }
 
     @GetMapping("/my")
@@ -36,7 +37,7 @@ public class PolicyController {
             @AuthenticationPrincipal String userId,
             @RequestBody UserPolicyCreateRequest request) {
         return ResponseEntity.ok(
-            policyService.createUserPolicy(UUID.fromString(userId), request)
+                policyService.createUserPolicy(UUID.fromString(userId), request)
         );
     }
 
