@@ -22,25 +22,25 @@ public class PolicyService {
     private final UserPolicyRepository userPolicyRepository;
 
     @Transactional(readOnly = true)
-    public List<PolicyResponse> getMatchingPolicies(int age, Long income) {
-        return policyRepository.findMatchingPolicies(age, income)
-            .stream()
-            .map(PolicyResponse::from)
-            .collect(Collectors.toList());
+    public List<PolicyResponse> getMatchingPolicies(int age, Long income, String policyType) {
+        return policyRepository.findMatchingPolicies(age, income, policyType)
+                .stream()
+                .map(PolicyResponse::from)
+                .collect(Collectors.toList());
     }
 
     @Transactional
     public UserPolicyResponse createUserPolicy(UUID userId, UserPolicyCreateRequest request) {
         Policy policy = policyRepository.findById(request.policyId())
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 정책입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 정책입니다."));
 
         userPolicyRepository.findByUserIdAndPolicyPolicyId(userId, request.policyId())
-            .ifPresent(up -> { throw new IllegalStateException("이미 등록된 정책입니다."); });
+                .ifPresent(up -> { throw new IllegalStateException("이미 등록된 정책입니다."); });
 
         UserPolicy userPolicy = new UserPolicy(
-            userId,
-            policy,
-            UserPolicy.UserPolicyStatus.valueOf(request.status())
+                userId,
+                policy,
+                UserPolicy.UserPolicyStatus.valueOf(request.status())
         );
 
         return UserPolicyResponse.from(userPolicyRepository.save(userPolicy));
@@ -49,15 +49,15 @@ public class PolicyService {
     @Transactional(readOnly = true)
     public List<UserPolicyResponse> getUserPolicies(UUID userId) {
         return userPolicyRepository.findByUserId(userId)
-            .stream()
-            .map(UserPolicyResponse::from)
-            .collect(Collectors.toList());
+                .stream()
+                .map(UserPolicyResponse::from)
+                .collect(Collectors.toList());
     }
 
     @Transactional
     public void deleteUserPolicy(UUID userId, UUID userPolicyId) {
         UserPolicy userPolicy = userPolicyRepository.findById(userPolicyId)
-            .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 정책입니다."));
+                .orElseThrow(() -> new IllegalArgumentException("존재하지 않는 정책입니다."));
 
         if (!userPolicy.getUserId().equals(userId)) {
             throw new IllegalStateException("본인의 정책만 삭제할 수 있습니다.");
@@ -66,3 +66,4 @@ public class PolicyService {
         userPolicyRepository.delete(userPolicy);
     }
 }
+
