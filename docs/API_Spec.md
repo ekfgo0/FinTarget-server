@@ -1,0 +1,360 @@
+# FinTarget API 명세서 (iOS 프론트 전달용)
+
+> 작성일: 2026-06-12
+> 베이스 URL: `http://localhost:8080` (개발 서버)
+> 인증: 모든 API는 JWT Bearer 토큰 필요 (로그인 API 제외)
+
+---
+
+## 인증 방법
+
+모든 요청 헤더에 아래 형식으로 토큰 포함:
+Authorization: Bearer {accessToken}
+
+---
+
+## 1. 인증 (Auth)
+
+### 카카오 로그인
+- **POST** `/auth/kakao/login`
+- 인증 불필요
+- Request Body:
+```json
+{
+  "authorizationCode": "string",
+  "redirectUri": "string"
+}
+```
+- Response:
+```json
+{
+  "status": 201,
+  "message": "Created",
+  "data": {
+    "userId": "string",
+    "accessToken": "string",
+    "refreshToken": "string",
+    "expiresIn": 3600,
+    "provider": "KAKAO",
+    "newUser": true
+  }
+}
+```
+
+### 네이버 로그인
+- **POST** `/auth/naver/login`
+- 인증 불필요
+- Request Body:
+```json
+{
+  "authorizationCode": "string",
+  "state": "string"
+}
+```
+
+### 애플 로그인
+- **POST** `/auth/apple/login`
+- 인증 불필요
+- Request Body:
+```json
+{
+  "identityToken": "string",
+  "authorizationCode": "string",
+  "fullName": "string",
+  "email": "string"
+}
+```
+
+### 토큰 갱신
+- **POST** `/auth/token/refresh`
+- Request Body:
+```json
+{
+  "refreshToken": "string"
+}
+```
+
+### 로그아웃
+- **POST** `/auth/logout`
+
+---
+
+## 2. 유저 (User)
+
+### 내 프로필 조회
+- **GET** `/users/me`
+- Response:
+```json
+{
+  "status": 200,
+  "message": "OK",
+  "data": {
+    "userId": "string",
+    "name": "string",
+    "email": "string",
+    "region": "string",
+    "provider": "string"
+  }
+}
+```
+
+### 프로필 수정
+- **PUT** `/users/me/profile`
+- Request Body:
+```json
+{
+  "name": "string",
+  "region": "string"
+}
+```
+
+---
+
+## 3. 온보딩 (Onboarding)
+
+### 온보딩 단계 조회
+- **GET** `/onboarding/step`
+- Query Parameters:
+    - `step` (optional, default: 1): 조회할 단계 번호
+- Response:
+```json
+{
+  "status": 200,
+  "message": "OK",
+  "data": {
+    "step": 1,
+    "totalSteps": 5,
+    "progress": 0.2,
+    "question": "string",
+    "answerType": "CHIP",
+    "options": [
+      { "label": "청년 (~39세)", "value": "YOUTH" }
+    ],
+    "complete": false
+  }
+}
+```
+
+### 온보딩 답변 제출
+- **POST** `/onboarding/answer`
+- Request Body:
+```json
+{
+  "step": 1,
+  "value": "YOUTH"
+}
+```
+
+---
+
+## 4. 목표 (Goal)
+
+### 목표 조회
+- **GET** `/api/goals`
+- Response: 목표 없으면 `data: null`, 있으면 아래 형식
+```json
+{
+  "goalId": "uuid",
+  "title": "string",
+  "targetAmount": 100000000,
+  "currentAmount": 5000000,
+  "deadline": "2027-12-31",
+  "status": "ACTIVE",
+  "createdAt": "datetime",
+  "updatedAt": "datetime",
+  "progressRate": 5.0,
+  "dday": 567
+}
+```
+> `status` 값: `ACTIVE` | `COMPLETED` | `ABANDONED`
+> `dday`: 양수=남은 일수, 0=오늘, 음수=기한 초과
+
+### 목표 생성
+- **POST** `/api/goals`
+- Request Body:
+```json
+{
+  "title": "전세 자금 마련",
+  "targetAmount": 100000000,
+  "currentAmount": 5000000,
+  "deadline": "2027-12-31"
+}
+```
+
+### 목표 수정
+- **PUT** `/api/goals`
+- Request Body: 목표 생성과 동일
+
+### 목표 삭제
+- **DELETE** `/api/goals`
+
+---
+
+## 5. 정책 (Policy)
+
+### 정책 목록 조회 (매칭)
+- **GET** `/api/policies`
+- Query Parameters:
+    - `age` (필수): 나이 (int)
+    - `income` (필수): 월 소득 (long)
+    - `policyType` (optional): 정책 타입 (`SAVINGS` | `LOAN` | `HOUSING`)
+- 파라미터 누락 시 400 반환
+- Response: 배열
+```json
+[
+  {
+    "policyId": "uuid",
+    "name": "청년도약계좌",
+    "description": "string",
+    "minAge": 19,
+    "maxAge": 34,
+    "incomeLimit": 7500000,
+    "benefitAmount": 2400000,
+    "policyType": "SAVINGS"
+  }
+]
+```
+
+### 내 정책 목록 조회
+- **GET** `/api/policies/my`
+- Response: 배열
+```json
+[
+  {
+    "userPolicyId": "uuid",
+    "policy": { },
+    "status": "APPLIED"
+  }
+]
+```
+> `status` 값: `APPLIED` | `INTEREST` | `ABANDONED`
+
+### 내 정책 추가
+- **POST** `/api/policies/my`
+- Request Body:
+```json
+{
+  "policyId": "uuid",
+  "status": "APPLIED"
+}
+```
+
+### 내 정책 삭제
+- **DELETE** `/api/policies/my/{userPolicyId}`
+- Path Parameter: `userPolicyId` (uuid)
+
+---
+
+## 6. 시뮬레이션 (Simulation)
+
+### 시뮬레이션 목록 조회
+- **GET** `/api/simulations`
+- Response: 배열
+```json
+[
+  {
+    "simulationId": "uuid",
+    "goalId": "uuid",
+    "monthlySaving": 500000,
+    "expectedCompletionDate": "2027-12-31",
+    "policyCompletionDate": "2027-06-30",
+    "createdAt": "datetime"
+  }
+]
+```
+
+### 시뮬레이션 실행
+- **POST** `/api/simulations`
+- Request Body:
+```json
+{
+  "goalId": "uuid",
+  "monthlySaving": 500000,
+  "userPolicyId": "uuid (optional)"
+}
+```
+
+### 목표별 시뮬레이션 조회
+- **GET** `/api/simulations/goal/{goalId}`
+- Path Parameter: `goalId` (uuid)
+
+---
+
+## 7. 지출 (Expense)
+
+### 지출 전체 조회
+- **GET** `/api/expenses`
+- Response: 배열
+```json
+[
+  {
+    "expenseId": "uuid",
+    "amount": 50000,
+    "category": "FOOD",
+    "description": "string",
+    "spentAt": "2026-06-12",
+    "createdAt": "datetime"
+  }
+]
+```
+
+### 기간별 지출 조회
+- **GET** `/api/expenses/period`
+- Query Parameters:
+    - `start` (필수): 시작일 (yyyy-MM-dd)
+    - `end` (필수): 종료일 (yyyy-MM-dd)
+
+### 지출 동기화
+- **POST** `/api/expenses/sync`
+- Request Body: 배열
+```json
+[
+  {
+    "amount": 50000,
+    "category": "FOOD",
+    "description": "string",
+    "spentAt": "2026-06-12"
+  }
+]
+```
+
+---
+
+## 8. 넛지 (Nudge)
+
+### 넛지 목록 조회
+- **GET** `/nudges`
+- Response:
+```json
+{
+  "status": 200,
+  "message": "OK",
+  "data": {
+    "unreadCount": 0,
+    "nudges": []
+  }
+}
+```
+
+### 넛지 읽음 처리
+- **PATCH** `/nudges/{nudgeId}/read`
+- Path Parameter: `nudgeId` (string)
+
+---
+
+## 공통 에러 응답
+
+| 상태코드 | 설명 |
+|---------|------|
+| 400 | 잘못된 요청 (파라미터 누락 등) |
+| 401 | 인증 실패 (토큰 없음/만료) |
+| 500 | 서버 오류 |
+
+---
+
+## 참고 사항
+
+- 스웨거 UI: `http://localhost:8080/swagger-ui.html`
+- 스웨거 JSON: `http://localhost:8080/v3/api-docs`
+- JWT 토큰 만료 시간: 1시간 (3600초)
+- 카카오 로그인 시 매번 신규 유저 생성되는 버그 수정 예정 (이슈 #10)
