@@ -35,9 +35,9 @@ public class GoalService {
 
     @Transactional(readOnly = true)
     public GoalResponse getGoal(UUID userId) {
-        Goal goal = goalRepository.findByUserId(userId)
-            .orElseThrow(() -> new IllegalArgumentException("목표가 존재하지 않습니다."));
-        return GoalResponse.from(goal);
+        return goalRepository.findByUserId(userId)
+                .map(GoalResponse::from)
+                .orElse(null);
     }
 
     @Transactional
