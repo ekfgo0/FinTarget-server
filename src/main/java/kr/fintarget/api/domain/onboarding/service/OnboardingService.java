@@ -77,6 +77,7 @@ public class OnboardingService {
                 request.getStep(),
                 request.getValue()
         );
+
         onboardingAnswerRepository.save(answer);
 
         // 마지막 단계면 완료 처리
