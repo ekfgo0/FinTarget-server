@@ -48,4 +48,18 @@ public class Policy {
     @UpdateTimestamp
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
+
+    public static Policy create(String name, String description, Integer minAge, Integer maxAge,
+                                Long incomeLimit, Long benefitAmount, String policyType) {
+        Policy policy = new Policy();
+        policy.name = name;
+        policy.description = description;
+        policy.minAge = minAge;
+        policy.maxAge = maxAge;
+        policy.incomeLimit = incomeLimit;
+        policy.benefitAmount = benefitAmount;
+        policy.policyType = policyType;
+        return policy;
+    }
+
 }

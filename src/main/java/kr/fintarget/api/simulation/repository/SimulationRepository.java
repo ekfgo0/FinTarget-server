@@ -8,4 +8,5 @@ import java.util.UUID;
 public interface SimulationRepository extends JpaRepository<Simulation, UUID> {
     List<Simulation> findByUserId(UUID userId);
     List<Simulation> findByUserIdAndGoalGoalId(UUID userId, UUID goalId);
+    void deleteAllByGoalGoalId(UUID goalId);
 }
