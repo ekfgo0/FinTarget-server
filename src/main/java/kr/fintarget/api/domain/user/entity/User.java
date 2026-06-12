@@ -37,8 +37,9 @@ public class User {
         this.createdAt = LocalDateTime.now();
     }
 
-    public void updateProfile(String name, String region) {
+    public void updateProfile(String name, String email, String region) {
         if (name != null) this.name = name;
+        if (email != null) this.email = email;
         if (region != null) this.region = region;
     }
 
