@@ -10,6 +10,7 @@ import kr.fintarget.api.security.JwtUtil;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
+
 import java.util.Map;
 @RestController
 @RequestMapping("/auth")
@@ -17,6 +18,8 @@ import java.util.Map;
 public class AuthController {
     private final JwtUtil jwtUtil;
     private final UserRepository userRepository;
+    private final KakaoOAuthClient kakaoOAuthClient;
+
     private ResponseEntity<ApiResponse<AuthResponse>> socialLogin(String providerId, String provider) {
         boolean isNewUser = !userRepository.findByProviderAndProviderId(provider, providerId).isPresent();
         User user = userRepository.findByProviderAndProviderId(provider, providerId)
@@ -40,18 +43,23 @@ public class AuthController {
                 isNewUser ? ApiResponse.created(response) : ApiResponse.ok(response)
         );
     }
+
     @PostMapping("/kakao/login")
     public ResponseEntity<ApiResponse<AuthResponse>> kakaoLogin(@RequestBody KakaoLoginRequest request) {
-        return socialLogin(request.getAuthorizationCode(), "KAKAO");
+        String kakaoUserId = kakaoOAuthClient.getKakaoUserId(request.getAuthorizationCode());
+        return socialLogin(kakaoUserId, "KAKAO");
     }
+
     @PostMapping("/naver/login")
     public ResponseEntity<ApiResponse<AuthResponse>> naverLogin(@RequestBody NaverLoginRequest request) {
         return socialLogin(request.getAuthorizationCode(), "NAVER");
     }
+
     @PostMapping("/apple/login")
     public ResponseEntity<ApiResponse<AuthResponse>> appleLogin(@RequestBody AppleLoginRequest request) {
         return socialLogin(request.getIdentityToken(), "APPLE");
     }
+
     @PostMapping("/token/refresh")
     public ResponseEntity<ApiResponse<?>> refreshToken(@RequestBody Map<String, String> body) {
         String refreshToken = body.get("refreshToken");
@@ -62,6 +70,7 @@ public class AuthController {
         String newAccessToken = jwtUtil.generateToken(userId, "REFRESH");
         return ResponseEntity.ok(ApiResponse.ok(Map.of("accessToken", newAccessToken, "expiresIn", 3600)));
     }
+
     @PostMapping("/logout")
     public ResponseEntity<ApiResponse<?>> logout() {
         return ResponseEntity.ok(ApiResponse.ok(null));

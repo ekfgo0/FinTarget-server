@@ -5,6 +5,7 @@ import kr.fintarget.api.goal.dto.GoalUpdateRequest;
 import kr.fintarget.api.goal.dto.GoalResponse;
 import kr.fintarget.api.goal.entity.Goal;
 import kr.fintarget.api.goal.repository.GoalRepository;
+import kr.fintarget.api.simulation.repository.SimulationRepository;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -15,6 +16,7 @@ import java.util.UUID;
 public class GoalService {
 
     private final GoalRepository goalRepository;
+    private final SimulationRepository simulationRepository;
 
     @Transactional
     public GoalResponse createGoal(UUID userId, GoalCreateRequest request) {
@@ -23,11 +25,11 @@ public class GoalService {
         }
 
         Goal goal = new Goal(
-            userId,
-            request.title(),
-            request.targetAmount(),
-            request.currentAmount(),
-            request.deadline()
+                userId,
+                request.title(),
+                request.targetAmount(),
+                request.currentAmount(),
+                request.deadline()
         );
 
         return GoalResponse.from(goalRepository.save(goal));
@@ -43,13 +45,13 @@ public class GoalService {
     @Transactional
     public GoalResponse updateGoal(UUID userId, GoalUpdateRequest request) {
         Goal goal = goalRepository.findByUserId(userId)
-            .orElseThrow(() -> new IllegalArgumentException("목표가 존재하지 않습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("목표가 존재하지 않습니다."));
 
         goal.update(
-            request.title(),
-            request.targetAmount(),
-            request.currentAmount(),
-            request.deadline()
+                request.title(),
+                request.targetAmount(),
+                request.currentAmount(),
+                request.deadline()
         );
 
         return GoalResponse.from(goal);
@@ -58,7 +60,9 @@ public class GoalService {
     @Transactional
     public void deleteGoal(UUID userId) {
         Goal goal = goalRepository.findByUserId(userId)
-            .orElseThrow(() -> new IllegalArgumentException("목표가 존재하지 않습니다."));
+                .orElseThrow(() -> new IllegalArgumentException("목표가 존재하지 않습니다."));
+
+        simulationRepository.deleteAllByGoalGoalId(goal.getGoalId());
         goalRepository.delete(goal);
     }
 }
