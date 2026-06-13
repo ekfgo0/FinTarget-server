@@ -36,10 +36,10 @@ public class ExpenseController {
     @GetMapping("/period")
     public ResponseEntity<List<ExpenseResponse>> getExpensesByPeriod(
             @AuthenticationPrincipal String userId,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
-            @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
+            @RequestParam(name = "start") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate start,
+            @RequestParam(name = "end") @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate end) {
         return ResponseEntity.ok(
-            expenseService.getExpensesByPeriod(UUID.fromString(userId), start, end)
+                expenseService.getExpensesByPeriod(UUID.fromString(userId), start, end)
         );
     }
 }

@@ -41,6 +41,9 @@ public class Policy {
     @Column(name = "policy_type", nullable = false)
     private String policyType;
 
+    @Column(name = "region")
+    private String region;
+
     @CreationTimestamp
     @Column(name = "created_at", updatable = false)
     private LocalDateTime createdAt;
@@ -50,7 +53,7 @@ public class Policy {
     private LocalDateTime updatedAt;
 
     public static Policy create(String name, String description, Integer minAge, Integer maxAge,
-                                Long incomeLimit, Long benefitAmount, String policyType) {
+                                Long incomeLimit, Long benefitAmount, String policyType, String region) {
         Policy policy = new Policy();
         policy.name = name;
         policy.description = description;
@@ -59,7 +62,7 @@ public class Policy {
         policy.incomeLimit = incomeLimit;
         policy.benefitAmount = benefitAmount;
         policy.policyType = policyType;
+        policy.region = region;
         return policy;
     }
-
 }
